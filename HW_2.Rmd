@@ -1,0 +1,274 @@
+---
+title: "SDS315_HW2"
+author: "Jaxon Lara"
+date: "1/27/2025"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE, message=FALSE}
+options(repr.plot.width=15, repr.plot.height=8)
+
+library(ggplot2)
+library(ggthemes)
+library(ggtext)
+library(tidyverse)
+library(kableExtra)
+library(scales)
+
+Profs=read.csv("profs.csv")
+BikeShare=read.csv("bikeshare.csv")
+CapMetro=read.csv("capmetro_UT.csv")
+Billboard=read.csv("billboard.csv")
+```
+
+# Problem 1: Beauty, or not, in the classroom
+## (A)
+```{r, echo=FALSE, message=FALSE}
+ggplot(Profs, aes(x=eval)) +
+geom_histogram(fill="grey15",binwidth=0.25, alpha=0.9) +
+stat_bin(binwidth=0.25, geom="text", aes(label=after_stat(count)), vjust=-1.5) +
+scale_x_continuous(breaks=seq(1,5,by=.5)) +
+scale_y_continuous(breaks=seq(0,100,by=10), limits=c(0,100)) +
+labs(title=str_wrap("Distribution of average course evaluation scores for instructors at UT Austin",width=60), x="Average evaluation score", y="Frequency", caption=str_wrap("The distribution of average evaluation scores is shown to be slightly skewed right. With the majority of average evaluation scores being between and within the 3.5 and 4.5 score bars.",width=100)) +
+theme(panel.grid.major=element_blank(),
+      panel.grid.minor=element_blank(),
+      panel.grid.major.y=element_line(color="grey30",linewidth=.5, linetype=1),
+      plot.caption = element_text(hjust = 0)
+      )
+```
+
+## (B)
+```{r, echo=FALSE, message=FALSE}
+ggplot(Profs,aes(x=eval,fill=native)) +
+geom_boxplot() +
+theme(axis.ticks.y=element_blank(),
+      axis.text.y=element_blank(),
+      panel.grid.major=element_blank(),
+      panel.grid.minor=element_blank(),
+      panel.grid.major.x=element_line(color="grey30",linewidth=.5, linetype=1),
+      plot.caption = element_text(hjust = 0)
+      ) +
+scale_x_continuous(breaks=seq(1,5,by=.5)) + 
+labs(title=str_wrap("Distribution of average course evaluation scores for instructors at UT Austin by whether or not they are a native English speaker",width=60), x="Average evaluation score", fill="Native English speaker", caption=str_wrap("The distribution shows that native English speaking instructors have a higher median average evaluation score closer to 4.0. While the distribution also shows that native English speaking instructors have a wider range of average evaluation scores.",width=100))
+```
+
+## (C)
+```{r, echo=FALSE, message=FALSE}
+ggplot(Profs, aes(x=eval)) +
+geom_histogram(aes(fill=gender), binwidth=0.25, alpha=0.9) +
+facet_grid(Profs$gender ~ .) +
+stat_bin(binwidth=0.25, geom="text", aes(label=after_stat(count)), vjust=-1.5) +
+scale_x_continuous(breaks=seq(1,5,by=.5)) +
+scale_y_continuous(breaks=seq(0,100,by=10), limits=c(0,65)) +
+labs(title=str_wrap("Distribution of average course evaluation scores for instructors at UT Austin by gender",width=60), x="Average Evaluation score", y="Frequency", fill="Gender", caption=str_wrap("Both distributions are shown to skew right and have the majority of average evaluation scores between and within the 3.5 and 4.5 score bars. While the male distribution's most frequently occuring score is higher compared to that of the female distribution.",width=100)) +
+theme(panel.grid.major=element_blank(),
+      panel.grid.minor=element_blank(),
+      panel.grid.major.y=element_line(color="grey30",linewidth=.5, linetype=1),
+      plot.caption = element_text(hjust = 0)
+      )
+```
+
+## (D)
+```{r, echo=FALSE, message=FALSE}
+ggplot(Profs, aes(x=beauty, y=eval)) +
+geom_point(color="grey15") +
+labs(title=str_wrap("Average beauty rating vs. average evaluation score for instructors at UT Austin",width=60), x="Average beauty rating (shifted to mean of 0)", y="Average evaluation score", caption=str_wrap("The distribution shows very little association between an instructor's average beauty rating and their average evaluation score.",width=100)) + 
+scale_y_continuous(breaks=seq(0,5,by=.5)) +
+geom_smooth(formula=y~x, method="lm", se=FALSE, na.rm=TRUE, color="grey30") +
+theme(panel.grid.major=element_blank(),
+      panel.grid.minor=element_blank(),
+      panel.grid.major.x=element_line(color="grey30",linewidth=.5, linetype=1),
+      panel.grid.major.y=element_line(color="grey30",linewidth=.5, linetype=1),
+      plot.caption = element_text(hjust = 0)
+      ) +
+scale_x_continuous(breaks=seq(-2,2,by=.5))
+```
+
+# Problem 2: Bike sharing
+## (A)
+```{r, echo=FALSE, message=FALSE}
+BikeShare_PivotA = pivot_wider(BikeShare, id_cols=c("instant","workingday","weathersit"), names_from="hr", values_from="total")
+
+BikeShare_PivotB = colMeans(BikeShare_PivotA, na.rm=TRUE)
+BikeShare_PivotB = BikeShare_PivotB[4:27]
+BikeShare_PivotB = as.data.frame(BikeShare_PivotB)
+BikeShare_PivotB$Hour = factor(rownames(BikeShare_PivotB), levels=rownames(BikeShare_PivotB))
+BikeShare_PivotB$Average = BikeShare_PivotB$BikeShare_PivotB
+BikeShare_PivotB = BikeShare_PivotB[,2:3]
+
+ggplot(BikeShare_PivotB, aes(x=Hour, y=Average, group=1)) + 
+geom_line(color="grey15",linewidth=2) + 
+labs(title=str_wrap("Average hourly bike rentals across all hours of the day",width=60), x="Hour", y="Average number of bike rentals", caption=str_wrap("The distribution shows the average number of bike rentals across the 0-23 hours of a day compiled over 2 years of data gathered from Washginton D.C in 2011 and 2012. Over the course of the day two distinct peaks are seen in the plot during the 8th and 17th hour at which the average number of bike rentals reach a relative maximum while the the average number of bike rentals plateaus inbetween the 8th and 17t hour. This shows that there was a distinct average bike rental pattern during a day in Washington d.C from 2011 to 2012.",width=100)) + theme(panel.grid.major=element_blank(),
+      panel.grid.minor=element_blank(),
+      panel.grid.major.x=element_line(color="grey30",linewidth=.5, linetype=1),
+      panel.grid.major.y=element_line(color="grey30",linewidth=.5, linetype=1),
+      plot.caption = element_text(hjust = 0)
+      )
+```
+
+## (B)
+```{r, echo=FALSE, message=FALSE}
+BikeShare_PivotC = as.data.frame(colMeans(BikeShare_PivotA[BikeShare_PivotA$workingday==0,], na.rm=TRUE))
+BikeShare_PivotD = as.data.frame(colMeans(BikeShare_PivotA[BikeShare_PivotA$workingday==1,], na.rm=TRUE))
+BikeShare_PivotC$Hour = factor(rownames(BikeShare_PivotC), levels=rownames(BikeShare_PivotC))
+BikeShare_PivotD$Hour = factor(rownames(BikeShare_PivotD), levels=rownames(BikeShare_PivotD))
+BikeShare_PivotC$WorkingDay = "Not a work day"
+BikeShare_PivotD$WorkingDay = "Work day"
+BikeShare_PivotC = as.data.frame(BikeShare_PivotC[4:27,])
+BikeShare_PivotD = as.data.frame(BikeShare_PivotD[4:27,])
+colnames(BikeShare_PivotC)[1]="Average"
+colnames(BikeShare_PivotD)[1]="Average"
+BikeShare_PivotE = rbind(BikeShare_PivotC, BikeShare_PivotD)
+
+ggplot(BikeShare_PivotE, aes(x=Hour, y=Average, group=1, color=WorkingDay)) +
+geom_line(linewidth=2) +
+facet_grid(BikeShare_PivotE$WorkingDay ~ .) +
+labs(title=str_wrap("Average hourly bike rentals across all hours of the day by workday/not",width=60), x="Hour", y="Average number of bike rentals", caption=str_wrap("The distribution shows the average number of bike rentals across the 0-23 hours of a day compiled over 2 years of data gathered from Washginton D.C in 2011 and 2012 separated by whether it was a work day or not. According to the distributions, there are 2 distinct peaks shown during the 8th and 17th hour in the work day distribution. While the not a work day distribution shows no distinct peaks but rather a hill showing a gradual increase in average bike rentals approaching the 13th hour and decreasing afterwards. This shows the pattern of bike rentals depends heavily on whether or not any given day is a work day.",width=100)) +
+theme(panel.grid.major=element_blank(),
+      panel.grid.minor=element_blank(),
+      panel.grid.major.x=element_line(color="grey30",linewidth=.5, linetype=1),
+      panel.grid.major.y=element_line(color="grey30",linewidth=.5, linetype=1),
+      plot.caption = element_text(hjust = 0),
+      legend.position="none"
+      )
+```
+
+## (C)
+```{r, echo=FALSE, message=FALSE}
+BikeShare_AverageAdjusted = BikeShare[,c(6,9,10,12)][BikeShare$hr==9,]
+ 
+a = filter(BikeShare_AverageAdjusted, (BikeShare_AverageAdjusted$workingday==1))
+b = filter(BikeShare_AverageAdjusted, (BikeShare_AverageAdjusted$workingday==0))
+ 
+a = a %>%
+   group_by(weathersit) %>%
+     summarize(average=mean(total))
+a$workingday = "Work day"
+
+b = b %>%
+   group_by(weathersit) %>%
+     summarize(average=mean(total))
+b$workingday = "Not a work day"
+
+c = rbind(a,b)
+
+c = c %>%
+  mutate(weathersit = case_when(weathersit==1~"Clear, Few clouds, Partly cloudy, Partly cloudy",weathersit==2~"Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist",weathersit==3~"Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds"))
+
+ggplot(c, aes(y=average, x=weathersit, fill=weathersit)) + 
+geom_bar(stat="identity", alpha=0.9) +
+facet_grid(c$workingday ~ .) +
+labs(title=str_wrap("Average ridership during 9AM by weather situation separated by workday/not",width=60), x="Weather situation", y="Average number of bike rentals", caption=str_wrap("The distribution shows the average number of bike rentals during 9AM compiled over 2 years of data gathered from Washginton D.C in 2011 and 2012 separated by whether it was a work day or not and grouped by the weather situation. The distribution of both types of day are relatively similar with higher severity weather conditions(green) showing the lowest average bike rentals and the least severe weather conditions showing the highest average bike rentals(red). While the work day distribution shows a general increase in average bike rentals in all weather situation compared to the not a work day distribution. This shows that weather situation also affects the average number of bike rentals along with whether its a work day or not.",width=100)) +
+theme(legend.position="none",
+      axis.ticks.y=element_blank(),
+      panel.grid.major=element_blank(),
+      panel.grid.minor=element_blank(),
+      panel.grid.major.y=element_line(color="grey30",linewidth=.5, linetype=1),
+      plot.caption = element_text(hjust = 0)
+      ) +
+scale_x_discrete(labels = label_wrap(width = 15)) 
+```
+
+# Problem 3: Capital Metro UT Ridership
+## (A)
+```{r, echo=FALSE, message=FALSE}
+CapMetro_Grouped = CapMetro[,c(2,4,6,7)] %>%
+  group_by(day_of_week, hour_of_day, month) %>%
+    summarize(average=mean(boarding, na.rm=TRUE), .groups = "drop")
+CapMetro_Grouped$month = factor(CapMetro_Grouped$month, levels=c("Sep","Oct","Nov"))
+CapMetro_Grouped$day_of_week = factor(CapMetro_Grouped$day_of_week, levels=c("Sun","Mon","Tue","Wed","Thu","Fri","Sat"))
+
+ggplot(CapMetro_Grouped, aes(x=hour_of_day, y=average, color=month)) +
+scale_color_manual(values=c("Sep"="blue", "Oct"="red", "Nov"="black")) +
+geom_line(linewidth=1) +
+facet_wrap(CapMetro_Grouped$day_of_week ~ .) + 
+labs(title=str_wrap("Average boardings by hour of the day, day of week, and month",width=60), x="Hour of the day", y="Average boardings", caption=str_wrap("The distributions show the average number of people who board any Cap Metro Bus on the UT campus by hour of the day separated by day of the week and grouped into the month when the data was recorded.                        (a) The hour of peak boardings is broadly similar across all days with Monday through Friday showing the most distinct peak boardings during and near the 16th hour while Sunday and Saturday distributions are fairly flat throughout the day.         
+(b) Labor day occurs on a Monday in September which would lead to a smaller average number of boardings since Labor day is a holiday on the UT academic schedule and would mean less activity on or around campus.                                         ",width=100)) + 
+theme(panel.grid.major=element_blank(),
+      panel.grid.minor=element_blank(),
+      panel.grid.major.y=element_line(color="grey30",linewidth=.5, linetype=1),
+      plot.caption = element_text(hjust = 0),
+      panel.grid.major.x=element_line(color="grey30",linewidth=.5, linetype=1)
+      ) +
+scale_x_continuous(breaks=seq(6,21,by=2))
+```
+
+## (B)
+```{r, echo=FALSE, message=FALSE}
+CapMetro_Grouped_B = CapMetro[,c(2,5,6,8)] %>%
+  group_by(hour_of_day, weekend)
+
+ggplot(CapMetro_Grouped_B, aes(y=boarding, x=temperature, color=weekend)) +
+geom_point(size=.4) +
+facet_wrap(CapMetro_Grouped_B$hour_of_day) +
+labs(title=str_wrap("Boardings vs. temperature, separated by hour of the day", width=60),x="Boardings", y="Temperature (F)", caption=str_wrap("The distributions plot the average number of people who board any Cap Metro Bus on the UT campus vs. the temperature in fahrenheit separated by the hour of the day and grouped by whether or not it was a weekday or on the weekend.
+(a) no, temperature seems to have no effect on the number of UT students riding the bus because the distribution remains flat as temperature increases instead of a slight skew.                                                                            ",width=100)) +
+theme(panel.grid.major=element_blank(),
+      panel.grid.minor=element_blank(),
+      panel.grid.major.y=element_line(color="grey30",linewidth=.5, linetype=1),
+      plot.caption = element_text(hjust = 0),
+      )
+```
+
+\newpage
+# Problem 4: Wrangling the billboard top 100
+## (A)
+```{r, echo=FALSE, message=FALSE}
+Billboard_TopWeeks = Billboard %>%
+  group_by(song, performer) %>%
+    summarize(count=max(weeks_on_chart, na.rm=TRUE), .groups = "drop")
+Billboard_TopWeeks = arrange(Billboard_TopWeeks, -count)[1:10,]
+
+kbl(Billboard_TopWeeks) %>% kable_paper(full_width = T, html_font = "Cambria") %>% kable_styling(bootstrap_options = c("striped","hover","condensed","responsive"))
+```
+
+###### The table shows the top 10 songs measured by the total number of weeks that a song spent on the Billboard Top 100. Radioactive tops the list at a total of 87 weeks on the Billboard Top 100 while Sail and Blinding Lights follow in 2nd and 3rd place respectively.
+
+\newpage
+## (B)
+```{r, echo=FALSE, message=FALSE}
+Billboard_Filter = filter(Billboard, Billboard$year!=1958 & Billboard$year!=2021)
+Billboard_Filter = Billboard_Filter[,c(5,12)]
+Billboard_Unique = tibble("Year"=1959:2020, "Unique"=1959:2020)
+for (i in 1:62){
+  Billboard_Unique$Unique[i] = nrow(unique(Billboard_Filter[Billboard_Filter$year==i+1958,]))
+}
+
+ggplot(Billboard_Unique, aes(x=Year, y=Unique, group=1)) + 
+geom_line(color="grey15",linewidth=2) + 
+labs(title=str_wrap("Number of unique songs in the given year",width=60), x="Year", y="Number of unique songs", caption=str_wrap("The distribution shows the number of unique songs that appear in the Billboard Top 100 each year from 1959 to 2020. According to the distribution the number of unique songs peaks around 1966 and begins to rapidly decrease until 2004 when the number of unique songs begins to speak again almost reaching the peak of 1966.",width=100)) +
+scale_x_continuous(breaks=seq(1950,2020,by=5)) +
+theme(panel.grid.major=element_blank(),
+      panel.grid.minor=element_blank(),
+      panel.grid.major.x=element_line(color="grey30",linewidth=.5, linetype=1),
+      panel.grid.major.y=element_line(color="grey30",linewidth=.5, linetype=1),
+      plot.caption = element_text(hjust = 0)
+      ) +
+scale_y_continuous(breaks=seq(0,850,by=50))
+```
+
+## (C)
+```{r, echo=FALSE, message=FALSE}
+Billboard_19 = filter(Billboard, weeks_on_chart>=10)
+Billboard_19 = Billboard_19[,c(5,6)]
+Billboard_19 = Billboard_19 %>%
+  group_by(performer) %>%
+    summarize(count=n_distinct(song), .groups = "drop")
+Billboard_19 = filter(Billboard_19, count>=30)
+
+ggplot(Billboard_19, aes(y=reorder(performer, count), x=count)) +
+geom_bar(stat="identity", alpha=0.9, fill="grey15") +
+theme(axis.ticks.y=element_blank(),
+      panel.grid.major=element_blank(),
+      panel.grid.minor=element_blank(),
+      panel.grid.major.x=element_line(color="grey30",linewidth=.5, linetype=1),
+      plot.caption = element_text(hjust = 0)
+      ) +
+labs(title=str_wrap("19 artists in U.S. musical history 1958-2021 who have had at least 30 songs that were
+“ten-week hits",width=60),x="Number of songs that were ten-week hits", y="Artist", caption=str_wrap("The distribution shows the 19 artists who had at least 30 songs that each appeared on the Billboard Top 100 for at least 10 weeks and their respective number of songs that were ten-week hits. The distriution is shown to be skewed towards the top 4 artists with the most ten-week hits as there are many more artists with fewer than 37 ten-week hits than those with more.",width=85)) +
+scale_x_continuous(breaks=seq(0,55,by=5))
+```
